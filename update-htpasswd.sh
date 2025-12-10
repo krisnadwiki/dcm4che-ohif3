@@ -67,6 +67,7 @@ case $choice in
     sudo cat nginx/htpasswd | cut -d: -f1
     echo "------------------------------------"
     echo ""
+    exit 0
     ;;
     
   *)
@@ -75,7 +76,7 @@ case $choice in
     ;;
 esac
 
-# Restart nginx
+# Restart nginx (hanya untuk opsi 1 dan 2)
 echo "Restarting nginx..."
 sudo docker compose restart nginx
 echo "✅ Selesai!"
