@@ -149,9 +149,7 @@ Sudah dikonfigurasi dengan:
 
 Tidak perlu diubah.
 
-### 4.4 File `ohif/app-config.js` - [Opsional]
-
-Default sudah benar mengarah ke `/dicomweb/rs`.
+### 4.4 Custom File `ohif/app-config.js` - [Opsional]
 
 **Custom logo dan nama aplikasi (opsional):**
 
@@ -248,7 +246,6 @@ sudo docker ps
 | OHIF Viewer (dengan Login) | `http://SERVER_IP/` | Basic Auth | Public |
 | OHIF Viewer (tanpa Login) | `http://SERVER_IP:3571/` | Tidak | VLAN Lokal |
 | DCM4CHEE UI | `http://SERVER_IP:8080/dcm4chee-arc/ui2` | Tidak | VLAN Lokal |
-| DICOM API | `http://SERVER_IP/dicomweb` | Basic Auth | Public |
 | DICOM Service | `SERVER_IP:11112` | Protocol DICOM | Network |
 | Portainer | `http://SERVER_IP:9000` | - | Lokal |
 
