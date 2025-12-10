@@ -212,9 +212,10 @@ Letakkan `logo.png` di folder `ohif/`.
 sudo ufw allow 80/tcp     # HTTP (OHIF dengan login)
 sudo ufw allow 443/tcp    # HTTPS (OHIF dengan login)
 sudo ufw allow 3571/tcp   # OHIF tanpa login
-sudo ufw allow 8080/tcp   # DCM4CHEE UI
+sudo ufw allow 8080/tcp   # HTTP DCM4CHEE Web Interface & Management
 sudo ufw allow 9000/tcp   # Portainer
-sudo ufw allow 11112/tcp  # DICOM Service
+sudo ufw allow 11112/tcp  # DICOM Connections (Modalities)
+sudo ufw allow 2575/tcp   # HL7 Receiver
 sudo ufw enable
 ```
 
@@ -328,10 +329,11 @@ sudo docker compose logs -f nginx
 |------|---------|--------|
 | 80 | nginx | HTTP (OHIF + Basic Auth) |
 | 443 | nginx | HTTPS (OHIF + Basic Auth) |
-| 3571 | nginx | Internal PACS UI |
-| 8080 | dcm4chee | REST API (Internal) |
-| 8443 | dcm4chee | HTTPS API (Internal) |
-| 11112 | dcm4chee | DICOM Service |
+| 3571 | nginx | Internal OHIF Viewer |
+| 8080 | dcm4chee | HTTP Web Interface & Management |
+| 8443 | dcm4chee | HTTPS Web Interface & Management |
+| 11112 | dcm4chee | DICOM Connections (Modalities) |
+| 2575 | dcm4chee | HL7 Receiver |
 | 9000 | portainer | Web UI |
 | 9443 | portainer | HTTPS UI |
 
