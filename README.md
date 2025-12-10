@@ -118,24 +118,27 @@ cat .env
 
 Default: `admin:admin123` (hash: `$apr1$kH8v4h4k$o8Bwonv9pSGaIPim47j4Z1`)
 
-**Update password:**
+**Cara mudah - gunakan script:**
 
 ```bash
-# Generate hash baru
-openssl passwd -apr1
-
-# Simpan ke file (ganti hash_baru dengan output openssl)
-echo "admin:\$apr1\$hash_baru" | sudo tee nginx/htpasswd
-
-# Restart nginx
-sudo docker compose restart nginx-proxy
+chmod +x update-htpasswd.sh
+sudo ./update-htpasswd.sh
 ```
 
-**Tambah user baru:**
+Script ini akan:
+- Pilih opsi: buat/update user, tambah user, atau lihat user
+- Input username dan password (dengan konfirmasi)
+- Generate hash otomatis
+- Update file htpasswd
+- Restart nginx secara otomatis
+
+**Atau manual dengan nano:**
 
 ```bash
-echo "user2:\$apr1\$hash_baru" | sudo tee -a nginx/htpasswd
+sudo nano nginx/htpasswd
 ```
+
+Edit dan ganti password hash, simpan dengan Ctrl+X → Y → Enter.
 
 ### 4.3 File `nginx/nginx.conf`
 
