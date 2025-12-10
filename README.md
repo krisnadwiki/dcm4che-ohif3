@@ -121,7 +121,7 @@ Default: `admin:admin123` (hash: `$apr1$kH8v4h4k$o8Bwonv9pSGaIPim47j4Z1`)
 **Cara mudah - gunakan script:**
 
 ```bash
-chmod +x update-htpasswd.sh
+sudo chmod +x update-htpasswd.sh
 sudo ./update-htpasswd.sh
 ```
 
@@ -236,7 +236,7 @@ sudo docker ps
 - `postgres` - Database
 - `dcm4chee-arc` - PACS Archive
 - `ohif-viewer` - Viewer
-- `nginx-proxy` - Reverse Proxy
+- `nginx` - Reverse Proxy
 - `portainer` - Management
 
 ---

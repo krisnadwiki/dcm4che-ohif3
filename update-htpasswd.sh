@@ -77,5 +77,5 @@ esac
 
 # Restart nginx
 echo "Restarting nginx..."
-sudo docker compose restart nginx-proxy
+sudo docker compose restart nginx
 echo "✅ Selesai!"
