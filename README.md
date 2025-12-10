@@ -1,4 +1,4 @@
-# Panduan Instalasi dcm4che + OHIF Viewer dengan Basic Auth
+# Instalasi dcm4che + OHIF Viewer dengan Basic Auth
 
 Setup dcm4che, dan OHIF Viewer di Ubuntu Server 24.04 dengan basic authentication via NGINX.
 
