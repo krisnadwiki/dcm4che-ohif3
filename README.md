@@ -27,10 +27,12 @@ Setup dcm4che, dan OHIF Viewer di Ubuntu Server 24.04 dengan basic authenticatio
 ## Preview Hasil Instalasi
 
 ### DCM4CHEE UI (Web Interface)
-![DCM4CHEE UI Preview](dcm4chee-ui-preview.png)
+![DCM4CHEE UI Preview](images/dcm4chee-ui-preview.png)
 
 ### OHIF Viewer
-![OHIF Viewer Preview](ohif-viewer-preview.png)
+![OHIF Viewer Preview](images/ohif-viewer-preview.png)
+
+> **Catatan:** Tambahkan file gambar ke folder `images/` untuk menampilkan preview hasil instalasi.
 
 ---
 
