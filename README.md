@@ -29,10 +29,9 @@ Setup dcm4che, dan OHIF Viewer di Ubuntu Server 24.04 dengan basic authenticatio
 ### DCM4CHEE UI (Web Interface)
 ![DCM4CHEE UI Preview](images/dcm4chee-ui-preview.png)
 
-### OHIF Viewer
+### OHIF Viewer 3.11.1
 ![OHIF Viewer Preview](images/ohif-viewer-preview.png)
 
-> **Catatan:** Tambahkan file gambar ke folder `images/` untuk menampilkan preview hasil instalasi.
 
 ---
 
@@ -89,6 +88,9 @@ cd dcm4che-ohif3
 dcm4che-ohif3/
 ├── docker-compose.yml
 ├── .env
+├── images/
+│   ├── dcm4chee-ui-preview.png
+│   ├── ohif-viewer-preview.png
 ├── nginx/
 │   ├── nginx.conf
 │   ├── htpasswd
@@ -336,10 +338,10 @@ sudo docker compose up -d
 - `depends_on` dengan `condition: service_healthy` untuk urutan startup
 
 **Urutan startup container:**
-1. `ldap` + `postgres` (base services)
-2. `dcm4chee-arc` (menunggu ldap & postgres healthy)
-3. `ohif-viewer` (menunggu dcm4chee-arc healthy)
-4. `nginx` (menunggu ohif & dcm4chee-arc healthy)
+1. `ldap` + `db` (base services)
+2. `arc` (menunggu ldap & db healthy)
+3. `ohif` (menunggu arc healthy)
+4. `nginx` (menunggu ohif & arc healthy)
 5. `portainer` (independent)
 
 ### Container tidak berjalan
@@ -392,8 +394,8 @@ sudo timedatectl set-timezone Asia/Jakarta
 sudo docker compose restart
 
 # Verifikasi timezone di container
-sudo docker exec dcm4chee-arc date
 sudo docker exec postgres date
+sudo docker exec dcm4chee-arc date
 
 # Verifikasi Java timezone
 sudo docker exec dcm4chee-arc bash -c 'echo $TZ'
@@ -405,22 +407,273 @@ sudo docker exec dcm4chee-arc bash -c 'echo $TZ'
 
 ## 9. Update & Maintenance
 
+### 9.1 Start/Stop Container
+
+**Start container (pertama kali):**
+
 ```bash
-# Pull image terbaru
+cd /opt/dcm4che-ohif3
 sudo docker compose pull
 sudo docker compose up -d
+```
 
-# Stop container
+Output:
+```
+[+] Building 0.0s (0/0)
+[+] Running 7/7
+ ✔ Container ldap         Healthy                                          5.5s
+ ✔ Container postgres     Healthy                                          5.0s
+ ✔ Container dcm4chee-arc Healthy                                         16.6s
+ ✔ Container ohif-viewer  Healthy                                          5.5s
+ ✔ Container nginx        Healthy                                          3.2s
+ ✔ Container portainer    Running                                          1.3s
+```
+
+Verifikasi status container:
+
+```bash
+sudo docker compose ps
+```
+
+**Stop semua container (tanpa delete):**
+
+```bash
+sudo docker compose stop
+```
+
+Output:
+```
+[+] Stopping 7/7
+ ✔ Container dcm4chee-arc Stopped                                          2.2s
+ ✔ Container nginx        Stopped                                          1.4s
+ ✔ Container ohif-viewer  Stopped                                          0.8s
+ ✔ Container portainer    Stopped                                          1.3s
+ ✔ Container postgres     Stopped                                          1.3s
+ ✔ Container ldap         Stopped                                          1.3s
+```
+
+**Start kembali semua container:**
+
+```bash
+sudo docker compose start
+```
+
+Output:
+```
+[+] Starting 6/6
+ ✔ Container ldap         Started                                          0.5s
+ ✔ Container postgres     Started                                          1.2s
+ ✔ Container dcm4chee-arc Started                                          2.5s
+ ✔ Container ohif-viewer  Started                                          1.5s
+ ✔ Container nginx        Started                                          1.2s
+ ✔ Container portainer    Started                                          0.8s
+```
+
+**Stop dan delete semua container + network (keep volumes & data):**
+
+```bash
 sudo docker compose down
+```
 
-# Lihat log real-time
-sudo docker compose logs -f dcm4chee-arc
+Output:
+```
+[+] Running 7/7
+ ✔ Container nginx              Removed                                    1.4s
+ ✔ Container ohif-viewer        Removed                                    0.8s
+ ✔ Container dcm4chee-arc       Removed                                    2.2s
+ ✔ Container portainer          Removed                                    1.3s
+ ✔ Container postgres           Removed                                    1.3s
+ ✔ Container ldap               Removed                                    1.3s
+ ✔ Network dcm4che-ohif_default Removed                                    0.2s
+```
+
+**Catatan:** Volume data di `/var/local/dcm4chee-arc/` tetap tersimpan, sehingga data tidak hilang.
+
+### 9.2 Container Restart
+
+**Restart satu container:**
+
+```bash
+sudo docker compose restart arc
+```
+
+Output:
+```
+[+] Restarting 1/1
+ ✔ Container dcm4chee-arc Restarted                                        5.2s
+```
+
+**Restart container tertentu:**
+
+```bash
+sudo docker compose restart db
+sudo docker compose restart nginx
+sudo docker compose restart ohif
+```
+
+**Restart semua container:**
+
+```bash
+sudo docker compose restart
+```
+
+Output:
+```
+[+] Restarting 6/6
+ ✔ Container ldap         Restarted                                        1.2s
+ ✔ Container postgres     Restarted                                        2.5s
+ ✔ Container dcm4chee-arc Restarted                                        8.3s
+ ✔ Container ohif-viewer  Restarted                                        2.1s
+ ✔ Container nginx        Restarted                                        1.5s
+ ✔ Container portainer    Restarted                                        1.0s
+```
+
+### 9.3 Lihat Log & Status
+
+**Status semua container:**
+
+```bash
+sudo docker compose ps
+```
+
+Output:
+```
+NAME            IMAGE                                COMMAND                  SERVICE         STATUS              PORTS
+ldap            dcm4che/slapd-dcm4chee:2.6.8-34.1   "/bin/sh -c '/entryp…"   ldap            Up 5 minutes (healthy)   389/tcp, 636/tcp
+postgres        dcm4che/postgres-dcm4chee:17.4-34   "docker-entrypoint.s…"   db              Up 5 minutes (healthy)   5432/tcp
+dcm4chee-arc    dcm4che/dcm4chee-arc-psql:5.34.1    "/bin/sh -c '/entryp…"   arc             Up 5 minutes (healthy)   8080/tcp, 8443/tcp, 9990/tcp, 9993/tcp, 11112/tcp, 2762/tcp, 2575/tcp, 12575/tcp
+ohif-viewer     ohif/app:latest                      "/docker-entrypoint.…"   ohif            Up 5 minutes (healthy)   80/tcp
+nginx           nginx:latest                         "/docker-entrypoint.…"   nginx           Up 4 minutes (healthy)   80/tcp, 443/tcp
+portainer       portainer/portainer-ce:latest        "/portainer"              portainer       Up 5 minutes             9000/tcp, 8000/tcp, 9443/tcp
+```
+
+**Lihat log real-time (follow):**
+
+```bash
+sudo docker compose logs -f arc
+```
+
+**Output contoh:**
+```
+arc  | 09:36:35,362 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-8) WFLYUT0006: Undertow HTTP listener default listening on 0.0.0.0:8080
+arc  | 10:28:05,125 INFO  [org.dcm4che.dcm4chee.arc.service.query.QueryService] (default task-1) Query from IP/HOST: 192.168.1.1/192.168.1.1
+```
+
+Atau lihat semua log dengan service name:
+
+```bash
+sudo docker compose logs -f
+```
+
+Output contoh:
+```
+ldap          | 6939476d.3808e713 0x75a103aa8b28 slapd starting
+db            | 2025-12-10 17:11:58.500 WIB [1] LOG:  starting PostgreSQL 17.4
+arc           | 09:36:35,362 INFO  [org.wildfly.extension.undertow] WFLYUT0006: Undertow HTTP listener default listening on 0.0.0.0:8080
+ohif          | nginx: master process /usr/sbin/nginx -g daemon off;
+nginx         | 2025-12-10T17:35:45.512345Z [notice] 1#1: signal process started
+```
+
+Atau lihat log service tertentu:
+
+```bash
+sudo docker compose logs -f db
+sudo docker compose logs -f arc
+sudo docker compose logs -f ohif
 sudo docker compose logs -f nginx
+sudo docker compose logs -f ldap
+```
+
+**Lihat log 50 baris terakhir (tanpa follow):**
+
+```bash
+sudo docker compose logs --tail=50 arc
+```
+
+### 9.4 Pull Image Terbaru
+
+```bash
+# Pull semua image terbaru dari registry
+sudo docker compose pull
+```
+
+Output:
+```
+[+] Pulling 6/6
+ ✔ ldap Pulled                                                              2.1s
+ ✔ db Pulled                                                                3.2s
+ ✔ arc Pulled                                                              12.5s
+ ✔ ohif Pulled                                                              4.3s
+ ✔ nginx Pulled                                                             2.8s
+ ✔ portainer Pulled                                                         5.1s
+```
+
+**Up dengan image terbaru:**
+
+```bash
+sudo docker compose up -d
+```
+
+Output:
+```
+[+] Running 7/7
+ ✔ Container ldap         Healthy                                          5.5s
+ ✔ Container postgres     Healthy                                          5.0s
+ ✔ Container dcm4chee-arc Healthy                                         16.6s
+ ✔ Container ohif-viewer  Healthy                                          5.5s
+ ✔ Container nginx        Healthy                                          3.2s
+ ✔ Container portainer    Running                                          1.3s
+```
+
+### 9.5 Cek Container Health
+
+**Cek healthcheck status semua container:**
+
+```bash
+sudo docker compose ps
+```
+
+Lihat kolom STATUS untuk keterangan (Healthy / Unhealthy / Running)
+
+**Cek detail healthcheck satu container:**
+
+```bash
+sudo docker inspect dcm4chee-arc | grep -A 20 "Health"
+```
+
+Output:
+```
+"Health": {
+    "Status": "healthy",
+    "FailingStreak": 0,
+    "Log": [
+        {
+            "Start": "2025-12-10T17:35:45.512345Z",
+            "End": "2025-12-10T17:35:50.512345Z",
+            "ExitCode": 0,
+            "Output": ""
+        }
+    ]
+}
+```
+
+**Troubleshoot container yang Unhealthy:**
+
+```bash
+# Lihat log container
+sudo docker compose logs arc
+
+# Restart container
+sudo docker compose restart arc
+
+# Tunggu beberapa saat dan cek status
+sleep 30
+sudo docker compose ps
 ```
 
 ---
 
-## Port Summary
+## 10. Port Summary
 
 | Port | Service | Tujuan |
 |------|---------|--------|
@@ -436,7 +689,7 @@ sudo docker compose logs -f nginx
 
 ---
 
-## Lisensi
+## 11. Lisensi
 
 - [dcm4che](https://github.com/dcm4che/dcm4che) - Apache License 2.0
 - [OHIF Viewer](https://github.com/OHIF/Viewers) - MIT License
