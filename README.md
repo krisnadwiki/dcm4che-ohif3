@@ -146,11 +146,11 @@ Sudah dikonfigurasi dengan:
 
 Tidak perlu diubah.
 
-### 4.4 File `ohif/app-config.js`
+### 4.4 File `ohif/app-config.js` - [Opsional]
 
 Default sudah benar mengarah ke `/dicomweb/rs`.
 
-**Custom logo dan nama aplikasi, uncomment white labeling:**
+**Custom logo dan nama aplikasi (opsional):**
 
 ```javascript
 whiteLabeling: {
