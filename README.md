@@ -161,7 +161,35 @@ Sudah dikonfigurasi dengan:
 
 Tidak perlu diubah.
 
-### 4.4 Custom File `ohif/app-config.js` - [Opsional]
+### 4.4 Timezone Configuration
+
+Semua container sudah dikonfigurasi menggunakan timezone **Asia/Jakarta (WIB, UTC+7)**.
+
+**Verifikasi timezone di host server:**
+
+```bash
+timedatectl
+```
+
+**Jika berbeda, set timezone server:**
+
+```bash
+sudo timedatectl set-timezone Asia/Jakarta
+```
+
+**Timezone di container:**
+- Environment variable `TZ=Asia/Jakarta` untuk semua container
+- Java/Wildfly: `JAVA_OPTS: -Duser.timezone=Asia/Jakarta`
+- PostgreSQL: `PGTZ=Asia/Jakarta`
+
+**Ganti timezone (opsional):**
+
+Edit file `.env` atau `docker-compose.yml`, ganti semua `Asia/Jakarta` dengan timezone lain, contoh:
+- `Asia/Makassar` (WITA, UTC+8)
+- `Asia/Jayapura` (WIT, UTC+9)
+- `UTC` (UTC+0)
+
+### 4.5 Custom File `ohif/app-config.js` - [Opsional]
 
 **Custom logo dan nama aplikasi (opsional):**
 
@@ -281,6 +309,39 @@ http://192.168.12.44:8080/dcm4chee-arc/ui2
 
 ## 8. Troubleshooting
 
+### Container tidak berjalan setelah restart server
+
+Jika container tidak auto-start setelah server restart:
+
+```bash
+# Cek status container
+sudo docker ps -a
+
+# Restart container yang exit
+sudo docker compose restart
+
+# Atau restart semua container
+sudo docker compose down
+sudo docker compose up -d
+```
+
+**Penyebab umum:**
+- Dependencies belum siap saat container start
+- Healthcheck timeout terlalu pendek
+- Resource limit (CPU/RAM) tidak cukup
+
+**Solusi permanent:**
+- Docker Compose sudah dikonfigurasi dengan `restart: unless-stopped`
+- Healthcheck memastikan dependencies ready sebelum start
+- `depends_on` dengan `condition: service_healthy` untuk urutan startup
+
+**Urutan startup container:**
+1. `ldap` + `postgres` (base services)
+2. `dcm4chee-arc` (menunggu ldap & postgres healthy)
+3. `ohif-viewer` (menunggu dcm4chee-arc healthy)
+4. `nginx` (menunggu ohif & dcm4chee-arc healthy)
+5. `portainer` (independent)
+
 ### Container tidak berjalan
 
 ```bash
@@ -315,6 +376,30 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -out nginx/certs/fullchain.pem
 sudo docker compose restart nginx
 ```
+
+### Timezone tidak sesuai
+
+Jika waktu di container tidak sesuai dengan server:
+
+```bash
+# Cek timezone server
+timedatectl
+
+# Set timezone server
+sudo timedatectl set-timezone Asia/Jakarta
+
+# Restart container untuk apply timezone
+sudo docker compose restart
+
+# Verifikasi timezone di container
+sudo docker exec dcm4chee-arc date
+sudo docker exec postgres date
+
+# Verifikasi Java timezone
+sudo docker exec dcm4chee-arc bash -c 'echo $TZ'
+```
+
+**Catatan:** Timezone dikonfigurasi via environment variable `TZ` di docker-compose.yml
 
 ---
 

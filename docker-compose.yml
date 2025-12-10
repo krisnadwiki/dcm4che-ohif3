@@ -2,6 +2,7 @@ services:
   ldap:
     image: dcm4che/slapd-dcm4chee:2.6.8-34.1
     container_name: ldap
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -11,13 +12,21 @@ services:
       - "636:636"
     environment:
       STORAGE_DIR: /storage/fs1
+      TZ: Asia/Jakarta
     volumes:
       - /var/local/dcm4chee-arc/ldap:/var/lib/openldap/openldap-data
       - /var/local/dcm4chee-arc/slapd.d:/etc/openldap/slapd.d
+    healthcheck:
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost:389 -b '' -s base || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   db:
     image: dcm4che/postgres-dcm4chee:17.4-34
     container_name: postgres
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -28,14 +37,23 @@ services:
       POSTGRES_DB: pacsdb
       POSTGRES_USER: pacs
       POSTGRES_PASSWORD: ${PACS_DB_PASSWORD}
+      TZ: Asia/Jakarta
+      PGTZ: Asia/Jakarta
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
       - /var/local/dcm4chee-arc/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pacs -d pacsdb || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   arc:
     image: dcm4che/dcm4chee-arc-psql:5.34.1
     container_name: dcm4chee-arc
+    restart: unless-stopped
     logging:
       driver: json-file
       options:
@@ -55,19 +73,31 @@ services:
       POSTGRES_PASSWORD: ${PACS_DB_PASSWORD}
       WILDFLY_CHOWN: /storage
       WILDFLY_WAIT_FOR: ldap:389 db:5432
+      TZ: Asia/Jakarta
+      JAVA_OPTS: -Duser.timezone=Asia/Jakarta
     depends_on:
-      - ldap
-      - db
+      ldap:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
       - /var/local/dcm4chee-arc/wildfly:/opt/wildfly/standalone
       - /var/local/dcm4chee-arc/storage:/storage
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
 
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
-    restart: always
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Jakarta
     security_opt:
       - no-new-privileges:true
     ports:
@@ -82,17 +112,28 @@ services:
   ohif:
     image: ohif/app:latest
     container_name: ohif-viewer
-    restart: always
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Jakarta
     depends_on:
-      - arc
+      arc:
+        condition: service_healthy
     volumes:
       - ./ohif/app-config.js:/usr/share/nginx/html/app-config.js:ro
       - ./ohif/logo.png:/usr/share/nginx/html/logo.png:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   nginx:
     image: nginx:latest
-    container_name: nginx-proxy
-    restart: always
+    container_name: nginx
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Jakarta
     ports:
       - "80:80"
       - "443:443"
@@ -103,5 +144,13 @@ services:
       - ./nginx/certs/privkey.pem:/etc/nginx/certs/privkey.pem:ro
       - ./nginx/htpasswd:/etc/nginx/htpasswd:ro
     depends_on:
-      - ohif
-      - arc
+      ohif:
+        condition: service_healthy
+      arc:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
