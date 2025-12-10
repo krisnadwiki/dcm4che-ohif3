@@ -116,23 +116,25 @@ cat .env
 
 ### 4.2 File `nginx/htpasswd` - Basic Authentication
 
-File sudah tersedia dengan default user `admin` dan password `admin123`. Untuk mengubah password:
+Default: `admin:admin123` (hash: `$apr1$kH8v4h4k$o8Bwonv9pSGaIPim47j4Z1`)
+
+**Update password:**
 
 ```bash
-# Generate hash password baru
-openssl passwd -apr1 admin123
-# Input password baru Anda, contoh output:
-# $apr1$kH8v4h4k$o8Bwonv9pSGaIPim47j4Z1
+# Generate hash baru
+openssl passwd -apr1
 
-# Update file htpasswd
-echo "admin:$apr1$kH8v4h4k$o8Bwonv9pSGaIPim47j4Z1" > nginx/htpasswd
+# Simpan ke file (ganti hash_baru dengan output openssl)
+echo "admin:\$apr1\$hash_baru" | sudo tee nginx/htpasswd
+
+# Restart nginx
+sudo docker compose restart nginx-proxy
 ```
 
-**Menambah user tambahan:**
+**Tambah user baru:**
 
 ```bash
-openssl passwd -apr1
-echo "user2:hash_baru" >> nginx/htpasswd
+echo "user2:\$apr1\$hash_baru" | sudo tee -a nginx/htpasswd
 ```
 
 ### 4.3 File `nginx/nginx.conf`
