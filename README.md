@@ -24,6 +24,16 @@ Setup dcm4che, dan OHIF Viewer di Ubuntu Server 24.04 dengan basic authenticatio
 
 ---
 
+## Preview Hasil Instalasi
+
+### DCM4CHEE UI (Web Interface)
+![DCM4CHEE UI Preview](dcm4chee-ui-preview.png)
+
+### OHIF Viewer
+![OHIF Viewer Preview](ohif-viewer-preview.png)
+
+---
+
 ## 1. Instalasi Docker
 
 ### 1.1 Hapus Docker Lama
